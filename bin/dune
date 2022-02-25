@@ -1,4 +1,11 @@
 (executable
- (public_name benchmark1)
- (name main)
- (libraries benchmark1))
+ (public_name core1)
+ (name core1)
+ (modules core1)
+ (libraries core_bench core))
+
+(executable
+ (public_name bechamel1)
+ (name bechamel1)
+ (modules bechamel1)
+ (libraries bechamel bechamel-notty notty.unix unix))
