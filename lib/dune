@@ -1,4 +1,4 @@
 (library
- (public_name benchmark1)
+ (public_name parsers)
  (libraries angstrom cstruct http)
- (name benchmark1))
+ (name parsers))

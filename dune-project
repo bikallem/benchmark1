@@ -1,7 +1,5 @@
 (lang dune 3.0)
 
-(name benchmark1)
-
 (generate_opam_files true)
 
 (source
@@ -14,7 +12,7 @@
 (license MPL2.0)
 
 (package
- (name benchmark1)
+ (name parsers)
  (synopsis "Benchmark experiments")
  (description "Benchmark experiments")
  (depends
@@ -25,4 +23,5 @@
   angstrom
   http
   cstruct
+  eio
   core))
