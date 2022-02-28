@@ -1,2 +1,4 @@
 (library
+ (public_name benchmark1)
+ (libraries angstrom)
  (name benchmark1))
