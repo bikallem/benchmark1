@@ -17,4 +17,11 @@
  (name benchmark1)
  (synopsis "Benchmark experiments")
  (description "Benchmark experiments")
- (depends ocaml dune core_bench core bechamel bechamel-notty))
+ (depends
+  (ocaml
+   (<= 4.12+domains))
+  dune
+  core_bench
+  core
+  bechamel
+  bechamel-notty))
