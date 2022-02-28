@@ -22,6 +22,5 @@
    (<= 4.12.0+domains))
   dune
   core_bench
-  core
-  bechamel
-  bechamel-notty))
+  angstrom
+  core))
