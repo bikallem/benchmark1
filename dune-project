@@ -12,7 +12,10 @@
 (license MPL2.0)
 
 (package
- (name parsers)
+ (name benchmark1))
+
+(package
+ (name cohttp_parser)
  (synopsis "Benchmark experiments")
  (description "Benchmark experiments")
  (depends
@@ -25,3 +28,6 @@
   cstruct
   eio
   core))
+
+(package
+ (name angstrom_parser))

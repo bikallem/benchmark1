@@ -1,5 +1,5 @@
 (executable
  (public_name benchmark1)
+ (package benchmark1)
  (name benchmark1)
- (modules benchmark1)
- (libraries core_bench core http eio_main eio parsers))
+ (libraries core_bench core http eio_main eio cohttp_parser angstrom_parser))

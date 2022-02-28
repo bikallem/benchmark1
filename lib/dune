@@ -1,4 +1,0 @@
-(library
- (public_name parsers)
- (libraries angstrom cstruct http)
- (name parsers))
