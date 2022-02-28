@@ -12,6 +12,8 @@ depends: [
   "dune" {>= "3.0"}
   "core_bench"
   "angstrom"
+  "http"
+  "cstruct"
   "core"
   "odoc" {with-doc}
 ]
@@ -30,4 +32,7 @@ build: [
   ]
 ]
 dev-repo: "git+https://github.com/bikallem/benchmark1.git"
-pin-depends:[["angstrom.dev" "git+https://github.com/talex5/angstrom#effects"]]
+pin-depends:[
+  ["http.dev" "git+https://github.com/bikallem/ocaml-cohttp.git#eio-3-custom-parser"]
+  ["angstrom.dev" "git+https://github.com/talex5/angstrom#effects"]
+]

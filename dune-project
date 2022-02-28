@@ -23,4 +23,6 @@
   dune
   core_bench
   angstrom
+  http
+  cstruct
   core))

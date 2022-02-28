@@ -1,4 +1,4 @@
 (library
  (public_name benchmark1)
- (libraries angstrom)
+ (libraries angstrom cstruct http)
  (name benchmark1))
