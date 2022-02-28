@@ -18,8 +18,8 @@
  (synopsis "Benchmark experiments")
  (description "Benchmark experiments")
  (depends
-  (ocaml
-   (<= 4.12+domains))
+  (ocaml-variants
+   (<= 4.12.0+domains))
   dune
   core_bench
   core
