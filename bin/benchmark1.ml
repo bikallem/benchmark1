@@ -19,17 +19,25 @@ let req_text =
    \r\n"
 
 let read_fn flow cs = try Eio.Flow.read flow cs with End_of_file -> 0
+let flow = ref (Eio.Flow.string_source req_text)
+let reader = Cohttp_parser.Reader.create 0x1000 (read_fn !flow)
+let input : Cohttp_parser.Parse.input = { pos = 0; rdr = reader }
 
 let cohttp_headers () =
-  let flow = Eio.Flow.string_source req_text in
-  let reader = Cohttp_parser.Reader.create 512 (read_fn flow) in
-  let input : Cohttp_parser.Parse.input = { pos = 0; rdr = reader } in
-  Cohttp_parser.Parse.headers input
+  let open Cohttp_parser in
+  flow := Eio.Flow.string_source req_text;
+  input.pos <- 0;
+  let p = Parse.(take_till is_space_or_colon (* <* char ':' <* spaces *)) in
+  p input
 
 let angstrom_headers () =
+  let open Angstrom in
   let flow = Eio.Flow.string_source req_text in
-  Angstrom.parse_reader ~consume:Angstrom.Consume.Prefix
-    Angstrom_parser.Parse.headers (read_fn flow)
+  let p =
+    take_till Angstrom_parser.Parse.P.is_space_or_colon
+    (* <* char ':' <* Angstrom_parser.Parse.spaces *)
+  in
+  Angstrom.parse_reader ~consume:Angstrom.Consume.Prefix p (read_fn flow)
 
 let () =
   Command.run

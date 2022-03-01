@@ -91,18 +91,6 @@ let version =
        digit
 
 let header =
-  (* From RFC7230§3.2.4:
-
-        "No whitespace is allowed between the header field-name and colon.  In
-        the past, differences in the handling of such whitespace have led to
-        security vulnerabilities in request routing and response handling.  A
-        server MUST reject any received request message that contains whitespace
-        between a header field-name and colon with a response code of 400 (Bad
-        Request).  A proxy MUST remove any such whitespace from a response
-        message before forwarding the message downstream."
-
-     This can be detected by checking the message and marks in a parse failure,
-     which should look like this when serialized "... > header > :". *)
   lift2
     (fun key value -> (key, value))
     (take_till P.is_space_or_colon <* char ':' <* spaces)
