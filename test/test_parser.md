@@ -60,7 +60,7 @@ let p4 = P.(string "GET" *> char ' ' *> char '/' *> char ' ')
 - : char * int = (' ', 6)
 ```
 
-## Take: take_while, take_while1, take_bigstring, take
+## Take: take_while, take_while1, take_bigstring, take, take_till, many  
 
 ```ocaml
 let f = function 'A' | 'B' | 'C' -> true | _ -> false
@@ -68,7 +68,11 @@ let p1 = P.take_while f
 let p2 = P.take_while1 f
 let p3 = P.take_bigstring 4
 let p4 = P.take 4
+let p5 = P.take_till (function ' ' -> true | _ -> false)
+let p6 = P.(many (char 'A'))
+
 ```
+
 ```ocaml
 # parse p1 "ABCD";;
 - : string * int = ("ABC", 3)
@@ -97,6 +101,31 @@ Exception: Cohttp_parser.Parse.Parse_failure "[take] not enough input".
 
 # parse (P.(string "GET" *> char ' ' *> take_while1 (fun c -> c != ' '))) "GET /hello  ";;
 - : string * int = ("/hello", 10)
+```
+
+`take_till` should not fail when end of file is reached 
+```ocaml
+# parse p5 "DDDD";;
+- : string * int = ("DDDD", 4)
+```
+
+`take_till` should stop when `p` in `many p` succeeds
+
+```ocaml
+# parse p5 "DDDDD AA";;
+- : string * int = ("DDDDD", 5)
+```
+
+`many` should stop when `p` in `many p` fails
+```ocaml
+# parse p6 "AAAA ";;
+- : char list * int = (['A'; 'A'; 'A'; 'A'], 4)
+```
+
+`many` should not fail when end of file is reached
+```ocaml
+# parse p6 "AAAA";;
+- : char list * int = (['A'; 'A'; 'A'; 'A'], 4)
 ```
 
 ## Skip: skip, skip_while, skip_many 

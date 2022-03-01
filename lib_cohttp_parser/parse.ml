@@ -86,6 +86,12 @@ let char c inp =
     c)
   else fail (sprintf "[char] expected %C, got %C" c c') inp
 
+let any_char inp =
+  ensure inp 1;
+  let c = Reader.unsafe_get inp.rdr inp.pos in
+  inp.pos <- inp.pos + 1;
+  c
+
 let satisfy f inp =
   let c = peek_char inp in
   if f c then (
@@ -184,18 +190,19 @@ let take : int -> string t =
 
 let take_till f = take_while (fun c -> not (f c))
 
-let rec many p inp =
+let rec many : 'a t -> 'a list t =
+ fun p inp ->
   try
     let a = p inp in
     a :: many p inp
-  with Parse_failure _ -> []
+  with Parse_failure _ | End_of_file -> []
 
-let rec many_till p t inp =
+let not_ : _ t -> unit t =
+ fun p inp ->
   try
-    let _ = t inp in
-    let a = p inp in
-    a :: many_till p t inp
-  with Parse_failure _ -> []
+    let _ = p inp in
+    fail "[not] suceeded" inp
+  with Parse_failure _ -> ()
 
 let skip f inp =
   ensure inp 1;
@@ -264,6 +271,6 @@ let headers =
       peek_char >>= function '\r' -> _emp | _ -> _rec)
   >>| Http.Header.of_list
 
-(* let headers = *)
-(*   let+ x = many header <* crlf in *)
-(*   Http.Header.of_list x *)
+let headers2 =
+  let+ x = many header in
+  Http.Header.of_list x
