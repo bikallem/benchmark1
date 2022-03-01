@@ -23,13 +23,37 @@ let flow = ref (Eio.Flow.string_source req_text)
 let reader = Cohttp_parser.Reader.create 0x1000 (read_fn !flow)
 let input : Cohttp_parser.Parse.input = { pos = 0; rdr = reader }
 
-let cohttp_headers () =
+let cohttp_headers1 () =
   let open Cohttp_parser in
   flow := Eio.Flow.string_source req_text;
   input.pos <- 0;
-  let p = Parse.(take_till is_space_or_colon (* <* char ':' <* spaces *)) in
-  p input
+  (* Parse.(take_till is_space_or_colon (1* <* char ':' <* spaces *1) input) *)
+  Parse.(take_while (fun c -> not (is_space_or_colon c)) input)
+(* Parse.(take_while2 (fun c -> not (is_space_or_colon c)) input) *)
+(* Parse.(count_while input (fun c -> not (is_space_or_colon c))) *)
 
+let cohttp_headers2 () =
+  let open Cohttp_parser in
+  flow := Eio.Flow.string_source req_text;
+  input.pos <- 0;
+  (* Parse.(take_till is_space_or_colon (1* <* char ':' <* spaces *1) input) *)
+  (* Parse.(take_while (fun c -> not (is_space_or_colon c)) input) *)
+  Parse.(take_while2 (fun c -> not (is_space_or_colon c)) input)
+(* Parse.(count_while input (fun c -> not (is_space_or_colon c))) *)
+
+(* let cohttp_headers3 () = *)
+(*   let open Cohttp_parser in *)
+(*   flow := Eio.Flow.string_source req_text; *)
+(*   input.pos <- 0; *)
+(*   (1* Parse.(take_till is_space_or_colon (2* <* char ':' <* spaces *2) input) *1) *)
+(*   (1* Printf.printf "\nlen: %d, off:%d%! " input.rdr.len input.rdr.off; *1) *)
+(*   (1* Parse.(ensure input 400) *1) *)
+(*   let _ = Reader.fill input.rdr 400 in *)
+(*   Reader.fill input.rdr 45 *)
+
+(* Reader.buffer input.rdr *)
+
+(* Parse.(count_while input (fun c -> not (is_space_or_colon c))) *)
 let angstrom_headers () =
   let open Angstrom in
   let flow = Eio.Flow.string_source req_text in
@@ -39,10 +63,14 @@ let angstrom_headers () =
   in
   Angstrom.parse_reader ~consume:Angstrom.Consume.Prefix p (read_fn flow)
 
+(* let () = cohttp_headers3 () *)
+
 let () =
   Command.run
     (Bench.make_command
        [
-         Bench.Test.create ~name:"cohttp" cohttp_headers;
+         Bench.Test.create ~name:"cohttp1" cohttp_headers1;
+         Bench.Test.create ~name:"cohttp2" cohttp_headers2;
+         (* Bench.Test.create ~name:"Reader.fill" cohttp_headers3; *)
          Bench.Test.create ~name:"angstrom" angstrom_headers;
        ])

@@ -11,15 +11,14 @@ let create len read_fn =
   (* Eio.traceln "Reader.create"; *)
   assert (len > 0);
   let buf = Bigstringaf.create len in
-  let off = 0 in
-  let got = read_fn (Cstruct.of_bigarray buf ~off ~len) in
+  (* let off = 0 in *)
+  (* let got = read_fn (Cstruct.of_bigarray buf ~off ~len) in *)
   (* Eio.traceln "Reader.create got:%d" got; *)
-  { buf; off = 0; len = got; read_fn; eof_seen = got = 0 }
+  { buf; off = 0; len = 0; read_fn; eof_seen = false }
 
 let length t = t.len
 let writable_space t = Bigstringaf.length t.buf - t.len
 let trailing_space t = Bigstringaf.length t.buf - (t.off + t.len)
-let buffer t = Bigstringaf.sub t.buf ~off:t.off ~len:t.len
 
 let compress t =
   (* Eio.traceln "Reader.compress"; *)
@@ -51,9 +50,9 @@ let consume t n =
 let fill t to_read =
   if t.eof_seen then 0
   else (
-    (* Eio.traceln *)
-    (*   "Reader.fill to_read:%d, reader.len:%d, reader.off:%d, buf.len:%d" to_read *)
-    (*   t.len t.off (Bigstringaf.length t.buf); *)
+    (* Printf.printf *)
+    (*   "\nReader.fill to_read:%d, reader.len:%d, reader.off:%d, buf.len:%d" *)
+    (*   to_read t.len t.off (Bigstringaf.length t.buf); *)
     adjust_buffer t to_read;
     let off = t.off + t.len in
     let len = trailing_space t in
@@ -68,3 +67,30 @@ let fill t to_read =
     else (
       t.len <- t.len + got;
       got))
+
+let unsafe_get t off = Bigstringaf.unsafe_get t.buf (t.off + off)
+let substring t ~off ~len = Bigstringaf.substring t.buf ~off:(t.off + off) ~len
+let copy t ~off ~len = Bigstringaf.copy t.buf ~off:(t.off + off) ~len
+
+(* let rec ensure (t : t) len = *)
+(*   assert (len > 0); *)
+(*   if t.len < len then *)
+(*     (1* Printf.printf "\n[ensure] Reader.len:%d, len:%d%!" (Reader.length inp.rdr) *1) *)
+(*     (1*   len; *1) *)
+(*     let got = fill t (len - t.) in *)
+(*     (1* Printf.printf "\n[ensure] got:%d%!" got; *1) *)
+(*     (1* Printf.printf "\n[ensure] Reader.len:%d, len:%d%!" (Reader.length inp.rdr) *1) *)
+(*     (1*   len; *1) *)
+(*     if got = 0 then raise_notrace End_of_file else ensure t len *)
+
+(* let count_while inp f = *)
+(*   let i = ref 0 in *)
+(*   let continue = ref true in *)
+(*   while !continue do *)
+(*     try *)
+(*       ensure inp (!i + 1); *)
+(*       let c = Bigstringaf.unsafe_get (Reader.buffer inp.rdr) (inp.pos + !i) in *)
+(*       if f c then incr i else continue := false *)
+(*     with End_of_file -> continue := false *)
+(*   done; *)
+(*   !i *)

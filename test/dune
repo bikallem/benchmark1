@@ -1,2 +1,3 @@
-(test
- (name benchmark1))
+(mdx
+ (package benchmark1)
+ (libraries cohttp_parser bigstringaf fmt eio))

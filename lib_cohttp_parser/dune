@@ -1,4 +1,4 @@
 (library
  (public_name cohttp_parser)
- (libraries angstrom cstruct http)
+ (libraries angstrom cstruct http eio)
  (name cohttp_parser))

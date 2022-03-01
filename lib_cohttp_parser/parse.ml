@@ -68,13 +68,13 @@ let option : 'a -> 'a t -> 'a t = fun x p -> p <|> return x
 
 let peek_char inp =
   ensure inp 1;
-  Bigstringaf.unsafe_get (Reader.buffer inp.rdr) inp.pos
+  Reader.unsafe_get inp.rdr inp.pos
 
 let peek_string n inp =
   try
     (* Printf.printf "\n[peek_string] len:%d%!" n; *)
     ensure inp n;
-    Bigstringaf.substring (Reader.buffer inp.rdr) ~off:inp.pos ~len:n
+    Reader.substring inp.rdr ~off:inp.pos ~len:n
   with End_of_file -> fail "[peek_string] not enough input" inp
 
 let sprintf = Printf.sprintf
@@ -103,7 +103,7 @@ let string s inp =
   while
     !i < len
     && Char.equal
-         (Bigstringaf.unsafe_get (Reader.buffer inp.rdr) (pos + !i))
+         (Reader.unsafe_get inp.rdr (pos + !i))
          (String.unsafe_get s !i)
   do
     incr i
@@ -123,7 +123,7 @@ let count_while inp f =
   while !continue do
     try
       ensure inp (!i + 1);
-      let c = Bigstringaf.unsafe_get (Reader.buffer inp.rdr) (inp.pos + !i) in
+      let c = Reader.unsafe_get inp.rdr (inp.pos + !i) in
       if f c then incr i else continue := false
     with End_of_file -> continue := false
   done;
@@ -133,21 +133,28 @@ let take_while1 f inp =
   let count = count_while inp f in
   if count < 1 then fail "[take_while1] count is less than 1" inp
   else
-    let s =
-      Bigstringaf.substring (Reader.buffer inp.rdr) ~off:inp.pos ~len:count
-    in
+    let s = Reader.substring inp.rdr ~off:inp.pos ~len:count in
     inp.pos <- inp.pos + count;
     s
 
 let take_while f inp =
   let count = count_while inp f in
   if count > 0 then (
-    let s =
-      Bigstringaf.substring (Reader.buffer inp.rdr) ~off:inp.pos ~len:count
-    in
+    let s = Reader.substring inp.rdr ~off:inp.pos ~len:count in
     inp.pos <- inp.pos + count;
     s)
   else ""
+
+let take_while2 f inp =
+  let count = count_while inp f in
+  count
+(* if count > 0 then ( *)
+(*   let s = *)
+(*     Bigstringaf.substring (Reader.buffer inp.rdr) ~off:inp.pos ~len:count *)
+(*   in *)
+(*   inp.pos <- inp.pos + count; *)
+(*   s) *)
+(* else "" *)
 
 let take_bigstring : int -> bigstring t =
  fun n inp ->
@@ -157,7 +164,7 @@ let take_bigstring : int -> bigstring t =
     (* let buf = Reader.buffer inp.rdr in *)
     (* Printf.printf "\n[take_bigstring] Reader.length :%d, n:%d, buf_len: %d%!" *)
     (*   (Reader.length inp.rdr) n (Bigstringaf.length buf); *)
-    let s = Bigstringaf.sub (Reader.buffer inp.rdr) ~off:0 ~len:n in
+    let s = Reader.copy inp.rdr ~off:0 ~len:n in
     inp.pos <- inp.pos + n;
     s
   with End_of_file -> fail "[take_bigstring] not enough input" inp
@@ -170,7 +177,7 @@ let take : int -> string t =
     (* let buf = Reader.buffer inp.rdr in *)
     (* Printf.printf "\n[take] Reader.length :%d, n:%d, buf_len: %d%!" *)
     (*   (Reader.length inp.rdr) n (Bigstringaf.length buf); *)
-    let s = Bigstringaf.substring (Reader.buffer inp.rdr) ~off:0 ~len:n in
+    let s = Reader.substring inp.rdr ~off:0 ~len:n in
     inp.pos <- inp.pos + n;
     s
   with End_of_file -> fail "[take] not enough input" inp
@@ -192,7 +199,7 @@ let rec many_till p t inp =
 
 let skip f inp =
   ensure inp 1;
-  let c = Bigstringaf.unsafe_get (Reader.buffer inp.rdr) inp.pos in
+  let c = Reader.unsafe_get inp.rdr inp.pos in
   if f c then inp.pos <- inp.pos + 1 else fail "[skip]" inp
 
 let skip_while f inp =

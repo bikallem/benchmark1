@@ -2,6 +2,8 @@
 
 (generate_opam_files true)
 
+(using mdx 0.2)
+
 (source
  (github bikallem/benchmark1))
 
