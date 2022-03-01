@@ -67,8 +67,10 @@ let end_of_input inp =
 let option : 'a -> 'a t -> 'a t = fun x p -> p <|> return x
 
 let peek_char inp =
-  ensure inp 1;
-  Reader.unsafe_get inp.rdr inp.pos
+  if inp.pos < Reader.length inp.rdr then Reader.unsafe_get inp.rdr inp.pos
+  else (
+    ensure inp 1;
+    Reader.unsafe_get inp.rdr inp.pos)
 
 let peek_string n inp =
   try
@@ -151,17 +153,6 @@ let take_while f inp =
     s)
   else ""
 
-let take_while2 f inp =
-  let count = count_while inp f in
-  count
-(* if count > 0 then ( *)
-(*   let s = *)
-(*     Bigstringaf.substring (Reader.buffer inp.rdr) ~off:inp.pos ~len:count *)
-(*   in *)
-(*   inp.pos <- inp.pos + count; *)
-(*   s) *)
-(* else "" *)
-
 let take_bigstring : int -> bigstring t =
  fun n inp ->
   try
@@ -195,6 +186,16 @@ let rec many : 'a t -> 'a list t =
   try
     let a = p inp in
     a :: many p inp
+  with Parse_failure _ | End_of_file -> []
+
+let rec many_while : 'a t -> (char -> bool) -> 'a list t =
+ fun p f inp ->
+  try
+    let c = peek_char inp in
+    if f c then
+      let a = p inp in
+      a :: many_while p f inp
+    else []
   with Parse_failure _ | End_of_file -> []
 
 let not_ : _ t -> unit t =
@@ -263,14 +264,21 @@ let header =
 (*    | ' ' | '\t' -> true*)
 (*    | _ -> false)*)
 
+let cons x xs = x :: xs
+let _emp = return []
+
 let headers =
-  let cons x xs = x :: xs in
-  fix (fun headers ->
-      let _emp = return [] in
-      let _rec = lift2 cons header headers in
-      peek_char >>= function '\r' -> _emp | _ -> _rec)
-  >>| Http.Header.of_list
+  let+ x =
+    fix (fun headers ->
+        let _rec = lift2 cons header headers in
+        peek_char >>= function '\r' -> _emp | _ -> _rec)
+  in
+  Http.Header.of_list x
 
 let headers2 =
   let+ x = many header in
+  Http.Header.of_list x
+
+let headers3 =
+  let+ x = many_while header (function '\r' -> false | _ -> true) in
   Http.Header.of_list x

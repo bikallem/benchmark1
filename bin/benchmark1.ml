@@ -23,10 +23,10 @@ let flow = ref (Eio.Flow.string_source req_text)
 let reader = Cohttp_parser.Reader.create 0x1000 (read_fn !flow)
 let input : Cohttp_parser.Parse.input = { pos = 0; rdr = reader }
 
-let cohttp_header () =
-  flow := Eio.Flow.string_source req_text;
-  input.pos <- 0;
-  Cohttp_parser.Parse.header input
+(* let cohttp_header () = *)
+(*   flow := Eio.Flow.string_source req_text; *)
+(*   input.pos <- 0; *)
+(*   Cohttp_parser.Parse.header input *)
 
 let cohttp_headers () =
   flow := Eio.Flow.string_source req_text;
@@ -38,14 +38,18 @@ let cohttp_headers2 () =
   input.pos <- 0;
   Cohttp_parser.Parse.headers2 input
 
-let _cohttp_headers2 () =
+let cohttp_headers3 () =
+  flow := Eio.Flow.string_source req_text;
+  input.pos <- 0;
+  Cohttp_parser.Parse.headers3 input
+
+let _cohttp_peek () =
   let open Cohttp_parser in
   flow := Eio.Flow.string_source req_text;
   input.pos <- 0;
   (* Parse.(take_till is_space_or_colon (1* <* char ':' <* spaces *1) input) *)
   (* Parse.(take_while (fun c -> not (is_space_or_colon c)) input) *)
-  Parse.(take_while2 (fun c -> not (is_space_or_colon c)) input)
-(* Parse.(count_while input (fun c -> not (is_space_or_colon c))) *)
+  Parse.(peek_char input)
 
 (* let cohttp_headers3 () = *)
 (*   let open Cohttp_parser in *)
@@ -65,19 +69,26 @@ let angstrom_headers () =
   let p = Angstrom_parser.Parse.headers in
   Angstrom.parse_reader ~consume:Angstrom.Consume.Prefix p (read_fn flow)
 
-let angstrom_header () =
+(* let angstrom_header () = *)
+(*   let flow = Eio.Flow.string_source req_text in *)
+(*   let p = Angstrom_parser.Parse.header in *)
+(*   Angstrom.parse_reader ~consume:Angstrom.Consume.Prefix p (read_fn flow) *)
+
+let _angstrom_peek () =
   let flow = Eio.Flow.string_source req_text in
-  let p = Angstrom_parser.Parse.header in
+  let p = Angstrom_parser.Parse.peek_char_fail in
   Angstrom.parse_reader ~consume:Angstrom.Consume.Prefix p (read_fn flow)
-(* let () = cohttp_headers3 () *)
 
 let () =
   Command.run
     (Bench.make_command
        [
-         Bench.Test.create ~name:"cohttp:header" cohttp_header;
+         (* Bench.Test.create ~name:"cohttp:peek" cohttp_peek; *)
+         (* Bench.Test.create ~name:"angstrom:peek" angstrom_peek *)
+         (* Bench.Test.create ~name:"cohttp:header" cohttp_header; *)
+         (* Bench.Test.create ~name:"angstrom:header" angstrom_header; *)
          Bench.Test.create ~name:"cohttp:headers" cohttp_headers;
          Bench.Test.create ~name:"cohttp:headers2" cohttp_headers2;
-         Bench.Test.create ~name:"angstrom:header" angstrom_header;
+         Bench.Test.create ~name:"cohttp:headers3" cohttp_headers3;
          Bench.Test.create ~name:"angstrom:headers" angstrom_headers;
        ])
