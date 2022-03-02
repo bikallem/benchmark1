@@ -19,11 +19,10 @@ let parse ?rdr p s =
   let p = P.(lift2 (fun a pos -> (a, pos)) p pos) in
   let rdr = 
     match rdr with
-    | Some v -> v 
+    | Some r -> (Reader.reset r; r)
     | None -> create_reader s 
   in
-  let input : Cohttp_parser.Parse.input = { pos = 0; rdr } in
-  p input
+  p rdr
 ```
 
 ## Basic: return, fail

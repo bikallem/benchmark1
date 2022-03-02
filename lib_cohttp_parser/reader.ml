@@ -28,8 +28,16 @@ let create len read_fn =
   }
 
 let length t = t.len
+let committed_bytes t = t.committed_bytes
+let pos t = t.pos
+let incr_pos ?(n = 1) t = t.pos <- t.pos + n
 let writable_space t = Bigstringaf.length t.buf - t.len
 let trailing_space t = Bigstringaf.length t.buf - (t.off + t.len)
+
+let reset t =
+  t.pos <- 0;
+  t.committed_bytes <- 0;
+  t.eof_seen <- false
 
 let compress t =
   (* Eio.traceln "Reader.compress"; *)
@@ -55,8 +63,13 @@ let adjust_buffer t to_read =
 
 let consume t n =
   assert (t.len >= n);
+  (* assert (t.pos >= n); *)
   t.off <- t.off + n;
-  t.len <- t.len - n
+  t.len <- t.len - n;
+  t.pos <- t.pos - n;
+  t.committed_bytes <- t.committed_bytes + n
+
+let consume_pos t = consume t t.pos
 
 let fill t to_read =
   if t.eof_seen then 0

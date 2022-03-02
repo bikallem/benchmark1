@@ -27,7 +27,6 @@ let read_fn flow buf ~off ~len =
 let angstrom_read_fn flow cs = try Eio.Flow.read flow cs with End_of_file -> 0
 let flow = ref (Eio.Flow.string_source req_text)
 let reader = Cohttp_parser.Reader.create 0x1000 (read_fn !flow)
-let input : Cohttp_parser.Parse.input = { pos = 0; rdr = reader }
 
 type hdr = { headers : (string * string) array; mutable len : int }
 
@@ -35,13 +34,13 @@ let hdrs = { headers = Array.create ~len:15 ("", ""); len = 0 }
 
 let cohttp_headers () =
   flow := Eio.Flow.string_source req_text;
-  input.pos <- 0;
-  Cohttp_parser.Parse.headers input
+  Cohttp_parser.Reader.reset reader;
+  Cohttp_parser.Parse.headers reader
 
 let cohttp_headers2 () =
   flow := Eio.Flow.string_source req_text;
-  input.pos <- 0;
-  Cohttp_parser.Parse.headers2 input
+  Cohttp_parser.Reader.reset reader;
+  Cohttp_parser.Parse.headers2 reader
 
 let rec headers3 (hdrs : hdr) inp =
   try
@@ -53,9 +52,9 @@ let rec headers3 (hdrs : hdr) inp =
 
 let cohttp_headers3 () =
   flow := Eio.Flow.string_source req_text;
-  input.pos <- 0;
+  Cohttp_parser.Reader.reset reader;
   hdrs.len <- 0;
-  headers3 hdrs input
+  headers3 hdrs reader
 
 let angstrom_headers () =
   let flow = Eio.Flow.string_source req_text in
