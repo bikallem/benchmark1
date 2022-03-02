@@ -46,7 +46,6 @@ let lift2 f p q inp =
   f a b
 
 let rec ensure inp len =
-  assert (len > 0);
   if Reader.length inp.rdr < inp.pos + len then
     (* Printf.printf "\n[ensure] Reader.len:%d, len:%d%!" (Reader.length inp.rdr) *)
     (*   len; *)

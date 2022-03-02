@@ -5,6 +5,8 @@ type t = {
   mutable buf : Bigstringaf.t;
   mutable off : int;
   mutable len : int;
+  mutable pos : int; (* Parser position *)
+  mutable committed_bytes : int; (* Total bytes read so far *)
   mutable eof_seen : bool;
 }
 
@@ -15,7 +17,15 @@ let create len read_fn =
   (* let off = 0 in *)
   (* let got = read_fn (Cstruct.of_bigarray buf ~off ~len) in *)
   (* Eio.traceln "Reader.create got:%d" got; *)
-  { buf; off = 0; len = 0; read_fn; eof_seen = false }
+  {
+    read_fn;
+    buf;
+    off = 0;
+    len = 0;
+    pos = 0;
+    committed_bytes = 0;
+    eof_seen = false;
+  }
 
 let length t = t.len
 let writable_space t = Bigstringaf.length t.buf - t.len

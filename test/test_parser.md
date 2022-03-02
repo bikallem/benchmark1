@@ -171,7 +171,8 @@ let p4 = P.(char 'D' *> char ' ' *> string "hello world")
 ```ocaml
 # let rdr = create_reader "ABCD hello world!";;
 val rdr : R.t =
-  {R.read_fn = <fun>; buf = <abstr>; off = 0; len = 0; eof_seen = false}
+  {R.read_fn = <fun>; buf = <abstr>; off = 0; len = 0; pos = 0;
+   committed_bytes = 0; eof_seen = false}
 
 # let ((), pos) = parse ~rdr p2 "ABCD hello world!";;
 val pos : int = 3
