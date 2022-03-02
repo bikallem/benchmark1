@@ -7,8 +7,10 @@ module R = Reader
 
 let create_reader s = 
   let flow = Eio.Flow.string_source s in
-  let read_fn cs = 
-    try Eio.Flow.read flow cs
+  let read_fn buf ~off ~len = 
+    try 
+      let cs = Cstruct.of_bigarray ~off ~len buf in 
+      Eio.Flow.read flow cs
     with End_of_file -> 0 
   in
   R.create 1 read_fn 

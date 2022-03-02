@@ -169,11 +169,7 @@ let take_bigstring : int -> bigstring t =
 let take : int -> string t =
  fun n inp ->
   try
-    (* Printf.printf "\n[take] n: %d%!" n; *)
     ensure inp n;
-    (* let buf = Reader.buffer inp.rdr in *)
-    (* Printf.printf "\n[take] Reader.length :%d, n:%d, buf_len: %d%!" *)
-    (*   (Reader.length inp.rdr) n (Bigstringaf.length buf); *)
     let s = Reader.substring inp.rdr ~off:0 ~len:n in
     inp.pos <- inp.pos + n;
     s
@@ -197,13 +193,6 @@ let rec many_while : 'a t -> (char -> bool) -> 'a list t =
       a :: many_while p f inp
     else []
   with Parse_failure _ | End_of_file -> []
-
-let not_ : _ t -> unit t =
- fun p inp ->
-  try
-    let _ = p inp in
-    fail "[not] suceeded" inp
-  with Parse_failure _ -> ()
 
 let skip f inp =
   ensure inp 1;

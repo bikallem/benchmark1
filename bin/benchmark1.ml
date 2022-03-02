@@ -18,7 +18,13 @@ let req_text =
    Cache-Control: max-age=0\r\n\
    \r\n"
 
-let read_fn flow cs = try Eio.Flow.read flow cs with End_of_file -> 0
+let read_fn flow buf ~off ~len =
+  try
+    let cs = Cstruct.of_bigarray ~off ~len buf in
+    Eio.Flow.read flow cs
+  with End_of_file -> 0
+
+let angstrom_read_fn flow cs = try Eio.Flow.read flow cs with End_of_file -> 0
 let flow = ref (Eio.Flow.string_source req_text)
 let reader = Cohttp_parser.Reader.create 0x1000 (read_fn !flow)
 let input : Cohttp_parser.Parse.input = { pos = 0; rdr = reader }
@@ -26,11 +32,6 @@ let input : Cohttp_parser.Parse.input = { pos = 0; rdr = reader }
 type hdr = { headers : (string * string) array; mutable len : int }
 
 let hdrs = { headers = Array.create ~len:15 ("", ""); len = 0 }
-
-let cohttp_header () =
-  flow := Eio.Flow.string_source req_text;
-  input.pos <- 0;
-  Cohttp_parser.Parse.header input
 
 let cohttp_headers () =
   flow := Eio.Flow.string_source req_text;
@@ -56,20 +57,11 @@ let cohttp_headers3 () =
   hdrs.len <- 0;
   headers3 hdrs input
 
-let angstrom_header () =
-  let flow = Eio.Flow.string_source req_text in
-  let p = Angstrom_parser.Parse.header in
-  Angstrom.parse_reader ~consume:Angstrom.Consume.Prefix p (read_fn flow)
-
 let angstrom_headers () =
   let flow = Eio.Flow.string_source req_text in
   let p = Angstrom_parser.Parse.headers in
-  Angstrom.parse_reader ~consume:Angstrom.Consume.Prefix p (read_fn flow)
-
-let _angstrom_peek () =
-  let flow = Eio.Flow.string_source req_text in
-  let p = Angstrom_parser.Parse.peek_char_fail in
-  Angstrom.parse_reader ~consume:Angstrom.Consume.Prefix p (read_fn flow)
+  Angstrom.parse_reader ~consume:Angstrom.Consume.Prefix p
+    (angstrom_read_fn flow)
 
 let () =
   Command.run

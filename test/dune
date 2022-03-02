@@ -1,3 +1,3 @@
 (mdx
  (package benchmark1)
- (libraries cohttp_parser bigstringaf fmt eio))
+ (libraries cohttp_parser bigstringaf fmt eio cstruct))

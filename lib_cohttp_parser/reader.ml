@@ -1,6 +1,7 @@
 (* Based on https://github.com/inhabitedtype/angstrom/blob/master/lib/buffering.ml *)
 type t = {
-  read_fn : Cstruct.t -> int; (* Return 0 to indicate End_of_file. *)
+  read_fn : Bigstringaf.t -> off:int -> len:int -> int;
+  (* Return 0 to indicate End_of_file. *)
   mutable buf : Bigstringaf.t;
   mutable off : int;
   mutable len : int;
@@ -56,8 +57,7 @@ let fill t to_read =
     adjust_buffer t to_read;
     let off = t.off + t.len in
     let len = trailing_space t in
-    let buf = Cstruct.of_bigarray t.buf ~off ~len in
-    let got = t.read_fn buf in
+    let got = t.read_fn t.buf ~off ~len in
     (* Eio.traceln "Reader.fill got:%d" got; *)
     (* Printf.printf "\n[fill] off:%d, len:%d, got:%d, to_read:%d%!" off len got *)
     (*   to_read; *)
