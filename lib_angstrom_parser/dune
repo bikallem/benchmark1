@@ -1,4 +1,5 @@
 (library
  (public_name angstrom_parser)
  (libraries angstrom)
+ (ocamlopt_flags -dcmm -S -dump-into-file)
  (name angstrom_parser))

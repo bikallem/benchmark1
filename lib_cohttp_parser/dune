@@ -1,4 +1,5 @@
 (library
  (public_name cohttp_parser)
  (libraries angstrom cstruct http eio)
+ (ocamlopt_flags -dcmm -S -dump-into-file)
  (name cohttp_parser))

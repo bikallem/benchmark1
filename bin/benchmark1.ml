@@ -23,10 +23,19 @@ let flow = ref (Eio.Flow.string_source req_text)
 let reader = Cohttp_parser.Reader.create 0x1000 (read_fn !flow)
 let input : Cohttp_parser.Parse.input = { pos = 0; rdr = reader }
 
-(* let cohttp_header () = *)
-(*   flow := Eio.Flow.string_source req_text; *)
-(*   input.pos <- 0; *)
-(*   Cohttp_parser.Parse.header input *)
+type hdr = { headers : (string * string) array; mutable len : int }
+
+let hdrs = { headers = Array.create ~len:15 ("", ""); len = 0 }
+
+let cohttp_header () =
+  flow := Eio.Flow.string_source req_text;
+  input.pos <- 0;
+  Cohttp_parser.Parse.header input
+
+let cohttp_header2 () =
+  flow := Eio.Flow.string_source req_text;
+  input.pos <- 0;
+  Cohttp_parser.Parse.header2 input
 
 let cohttp_headers () =
   flow := Eio.Flow.string_source req_text;
@@ -38,10 +47,19 @@ let cohttp_headers2 () =
   input.pos <- 0;
   Cohttp_parser.Parse.headers2 input
 
+let rec headers3 (hdrs : hdr) inp =
+  try
+    let h = Cohttp_parser.Parse.header inp in
+    Array.unsafe_set hdrs.headers hdrs.len h;
+    hdrs.len <- hdrs.len + 1;
+    headers3 hdrs inp
+  with Cohttp_parser.Parse.Parse_failure _ -> ()
+
 let cohttp_headers3 () =
   flow := Eio.Flow.string_source req_text;
   input.pos <- 0;
-  Cohttp_parser.Parse.headers3 input
+  hdrs.len <- 0;
+  headers3 hdrs input
 
 let _cohttp_peek () =
   let open Cohttp_parser in
@@ -51,28 +69,27 @@ let _cohttp_peek () =
   (* Parse.(take_while (fun c -> not (is_space_or_colon c)) input) *)
   Parse.(peek_char input)
 
-(* let cohttp_headers3 () = *)
+(* let cohttp_headers4 () = *)
 (*   let open Cohttp_parser in *)
 (*   flow := Eio.Flow.string_source req_text; *)
 (*   input.pos <- 0; *)
-(*   (1* Parse.(take_till is_space_or_colon (2* <* char ':' <* spaces *2) input) *1) *)
-(*   (1* Printf.printf "\nlen: %d, off:%d%! " input.rdr.len input.rdr.off; *1) *)
-(*   (1* Parse.(ensure input 400) *1) *)
-(*   let _ = Reader.fill input.rdr 400 in *)
-(*   Reader.fill input.rdr 45 *)
+(*   let continue = ref true in *)
+(*   while !continue do *)
+(*     try ignore (Parse.header input) with _ -> continue := false *)
+(*   done *)
 
 (* Reader.buffer input.rdr *)
+
+let angstrom_header () =
+  let flow = Eio.Flow.string_source req_text in
+  let p = Angstrom_parser.Parse.header in
+  Angstrom.parse_reader ~consume:Angstrom.Consume.Prefix p (read_fn flow)
 
 (* Parse.(count_while input (fun c -> not (is_space_or_colon c))) *)
 let angstrom_headers () =
   let flow = Eio.Flow.string_source req_text in
   let p = Angstrom_parser.Parse.headers in
   Angstrom.parse_reader ~consume:Angstrom.Consume.Prefix p (read_fn flow)
-
-(* let angstrom_header () = *)
-(*   let flow = Eio.Flow.string_source req_text in *)
-(*   let p = Angstrom_parser.Parse.header in *)
-(*   Angstrom.parse_reader ~consume:Angstrom.Consume.Prefix p (read_fn flow) *)
 
 let _angstrom_peek () =
   let flow = Eio.Flow.string_source req_text in
@@ -84,11 +101,14 @@ let () =
     (Bench.make_command
        [
          (* Bench.Test.create ~name:"cohttp:peek" cohttp_peek; *)
-         (* Bench.Test.create ~name:"angstrom:peek" angstrom_peek *)
-         (* Bench.Test.create ~name:"cohttp:header" cohttp_header; *)
-         (* Bench.Test.create ~name:"angstrom:header" angstrom_header; *)
+         (* Bench.Test.create ~name:"angstrom:peek" angstrom_peek; *)
+         Bench.Test.create ~name:"cohttp:header" cohttp_header;
+         Bench.Test.create ~name:"cohttp:header2" cohttp_header2;
+         Bench.Test.create ~name:"angstrom:header" angstrom_header;
+         Bench.Test.create ~name:"angstrom:headers" angstrom_headers;
          Bench.Test.create ~name:"cohttp:headers" cohttp_headers;
          Bench.Test.create ~name:"cohttp:headers2" cohttp_headers2;
          Bench.Test.create ~name:"cohttp:headers3" cohttp_headers3;
-         Bench.Test.create ~name:"angstrom:headers" angstrom_headers;
        ])
+
+(* let () = ignore (cohttp_headers4 ()) *)

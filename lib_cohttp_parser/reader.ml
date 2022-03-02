@@ -69,28 +69,11 @@ let fill t to_read =
       got))
 
 let unsafe_get t off = Bigstringaf.unsafe_get t.buf (t.off + off)
-let substring t ~off ~len = Bigstringaf.substring t.buf ~off:(t.off + off) ~len
+
+let substring t ~off ~len =
+  let b = Bytes.create len in
+  Bigstringaf.unsafe_blit_to_bytes t.buf ~src_off:(t.off + off) b ~dst_off:0
+    ~len;
+  Bytes.unsafe_to_string b
+
 let copy t ~off ~len = Bigstringaf.copy t.buf ~off:(t.off + off) ~len
-
-(* let rec ensure (t : t) len = *)
-(*   assert (len > 0); *)
-(*   if t.len < len then *)
-(*     (1* Printf.printf "\n[ensure] Reader.len:%d, len:%d%!" (Reader.length inp.rdr) *1) *)
-(*     (1*   len; *1) *)
-(*     let got = fill t (len - t.) in *)
-(*     (1* Printf.printf "\n[ensure] got:%d%!" got; *1) *)
-(*     (1* Printf.printf "\n[ensure] Reader.len:%d, len:%d%!" (Reader.length inp.rdr) *1) *)
-(*     (1*   len; *1) *)
-(*     if got = 0 then raise_notrace End_of_file else ensure t len *)
-
-(* let count_while inp f = *)
-(*   let i = ref 0 in *)
-(*   let continue = ref true in *)
-(*   while !continue do *)
-(*     try *)
-(*       ensure inp (!i + 1); *)
-(*       let c = Bigstringaf.unsafe_get (Reader.buffer inp.rdr) (inp.pos + !i) in *)
-(*       if f c then incr i else continue := false *)
-(*     with End_of_file -> continue := false *)
-(*   done; *)
-(*   !i *)

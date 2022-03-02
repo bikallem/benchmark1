@@ -257,12 +257,14 @@ let eol = string "\r\n" <?> "eol"
 let header =
   lift2
     (fun key value -> (key, value))
-    (take_till is_space_or_colon <* char ':' <* ows)
+    (token <* char ':' <* ows)
+    (take_till is_cr <* crlf)
+
+let header2 =
+  lift2
+    (fun key value -> (key, value))
+    (token <* char ':')
     (take_till is_cr <* crlf >>| String.trim)
-(* (take_while (function*)
-(*    | '\x21' .. '\x7E' -> true (* vchar*)*)
-(*    | ' ' | '\t' -> true*)
-(*    | _ -> false)*)
 
 let cons x xs = x :: xs
 let _emp = return []
@@ -279,6 +281,6 @@ let headers2 =
   let+ x = many header in
   Http.Header.of_list x
 
-let headers3 =
+let headers4 =
   let+ x = many_while header (function '\r' -> false | _ -> true) in
   Http.Header.of_list x
