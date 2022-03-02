@@ -32,11 +32,6 @@ let cohttp_header () =
   input.pos <- 0;
   Cohttp_parser.Parse.header input
 
-let cohttp_header2 () =
-  flow := Eio.Flow.string_source req_text;
-  input.pos <- 0;
-  Cohttp_parser.Parse.header2 input
-
 let cohttp_headers () =
   flow := Eio.Flow.string_source req_text;
   input.pos <- 0;
@@ -61,31 +56,11 @@ let cohttp_headers3 () =
   hdrs.len <- 0;
   headers3 hdrs input
 
-let _cohttp_peek () =
-  let open Cohttp_parser in
-  flow := Eio.Flow.string_source req_text;
-  input.pos <- 0;
-  (* Parse.(take_till is_space_or_colon (1* <* char ':' <* spaces *1) input) *)
-  (* Parse.(take_while (fun c -> not (is_space_or_colon c)) input) *)
-  Parse.(peek_char input)
-
-(* let cohttp_headers4 () = *)
-(*   let open Cohttp_parser in *)
-(*   flow := Eio.Flow.string_source req_text; *)
-(*   input.pos <- 0; *)
-(*   let continue = ref true in *)
-(*   while !continue do *)
-(*     try ignore (Parse.header input) with _ -> continue := false *)
-(*   done *)
-
-(* Reader.buffer input.rdr *)
-
 let angstrom_header () =
   let flow = Eio.Flow.string_source req_text in
   let p = Angstrom_parser.Parse.header in
   Angstrom.parse_reader ~consume:Angstrom.Consume.Prefix p (read_fn flow)
 
-(* Parse.(count_while input (fun c -> not (is_space_or_colon c))) *)
 let angstrom_headers () =
   let flow = Eio.Flow.string_source req_text in
   let p = Angstrom_parser.Parse.headers in
@@ -100,15 +75,8 @@ let () =
   Command.run
     (Bench.make_command
        [
-         (* Bench.Test.create ~name:"cohttp:peek" cohttp_peek; *)
-         (* Bench.Test.create ~name:"angstrom:peek" angstrom_peek; *)
-         Bench.Test.create ~name:"cohttp:header" cohttp_header;
-         Bench.Test.create ~name:"cohttp:header2" cohttp_header2;
-         Bench.Test.create ~name:"angstrom:header" angstrom_header;
          Bench.Test.create ~name:"angstrom:headers" angstrom_headers;
          Bench.Test.create ~name:"cohttp:headers" cohttp_headers;
          Bench.Test.create ~name:"cohttp:headers2" cohttp_headers2;
          Bench.Test.create ~name:"cohttp:headers3" cohttp_headers3;
        ])
-
-(* let () = ignore (cohttp_headers4 ()) *)

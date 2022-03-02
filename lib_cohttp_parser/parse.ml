@@ -217,18 +217,6 @@ let skip_while f inp =
 let rec skip_many p inp =
   match p inp with _ -> skip_many p inp | exception Parse_failure _ -> ()
 
-(* let parse : Reader.t -> 'a t -> 'a = *)
-(*  fun rdr p -> *)
-(*   let inp = { pos = 0; rdr } in *)
-(*   let a = p inp in *)
-(*   Reader.consume rdr inp.pos; *)
-(*   a *)
-(* end *)
-
-(* include P *)
-
-(* let parse = parse *)
-
 let token =
   take_while1 (function
     | '0' .. '9'
@@ -259,12 +247,6 @@ let header =
     (fun key value -> (key, value))
     (token <* char ':' <* ows)
     (take_till is_cr <* crlf)
-
-let header2 =
-  lift2
-    (fun key value -> (key, value))
-    (token <* char ':')
-    (take_till is_cr <* crlf >>| String.trim)
 
 let cons x xs = x :: xs
 let _emp = return []
