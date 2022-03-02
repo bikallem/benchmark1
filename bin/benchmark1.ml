@@ -47,6 +47,7 @@ let rec headers3 (hdrs : hdr) inp =
     let h = Cohttp_parser.Parse.header inp in
     Array.unsafe_set hdrs.headers hdrs.len h;
     hdrs.len <- hdrs.len + 1;
+    (* Cohttp_parser.Parse.commit inp; *)
     headers3 hdrs inp
   with Cohttp_parser.Parse.Parse_failure _ -> ()
 

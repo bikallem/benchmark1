@@ -14,9 +14,6 @@ let create len read_fn =
   (* Eio.traceln "Reader.create"; *)
   assert (len > 0);
   let buf = Bigstringaf.create len in
-  (* let off = 0 in *)
-  (* let got = read_fn (Cstruct.of_bigarray buf ~off ~len) in *)
-  (* Eio.traceln "Reader.create got:%d" got; *)
   {
     read_fn;
     buf;
@@ -69,7 +66,7 @@ let consume t n =
   t.pos <- t.pos - n;
   t.committed_bytes <- t.committed_bytes + n
 
-let consume_pos t = consume t t.pos
+let commit t = consume t t.pos
 
 let fill t to_read =
   if t.eof_seen then 0

@@ -25,17 +25,22 @@ let parse ?rdr p s =
   p rdr
 ```
 
-## Basic: return, fail
+## Basic: return, fail, commit
 ```ocaml
 let p1 = P.return "hello"
 let p2 = P.fail "parse error"
+let p3 = P.(string "hello" *> commit *> char ' ' *> string "world")
 ```
 
 ```ocaml
 # parse p1 "";;
 - : string * int = ("hello", 0)
+
 # parse p2 "";;
 Exception: Cohttp_parser.Parse.Parse_failure "parse error".
+
+# parse p3 "hello world";;
+- : string * int = ("world", 6)
 ```
 
 ## String/Char: char, satisfy, string, peek_string, peek_char, *>, <*

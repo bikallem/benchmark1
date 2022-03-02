@@ -7,7 +7,7 @@ exception Parse_failure of string
 
 let return v _ = v
 let fail err _ = Stdlib.raise_notrace (Parse_failure err)
-let commit inp = Reader.consume_pos inp
+let commit inp = Reader.commit inp
 let ( <?> ) p err inp = try p inp with Parse_failure _e -> fail err inp
 
 let ( >>= ) p f inp =
