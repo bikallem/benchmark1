@@ -40,7 +40,7 @@ let p3 = P.(string "hello" *> commit *> char ' ' *> string "world")
 Exception: Cohttp_parser.Parse.Parse_failure "parse error".
 
 # parse p3 "hello world";;
-- : string * int = ("world", 6)
+- : unit * int = ((), 6)
 ```
 
 ## String/Char: char, satisfy, string, peek_string, peek_char, *>, <*
@@ -63,10 +63,10 @@ let p4 = P.(string "GET" *> char ' ' *> char '/' *> char ' ')
 - : char * int = ('A', 1)
 
 # parse p4 "GET / ";;
-- : char * int = (' ', 6)
+- : unit * int = ((), 6)
 ```
 
-## Take: take_while, take_while1, take_bigstring, take, take_till, many, many_till
+## Take: take_while, take_while1, take_bigstring, take, take_till, many 
 
 ```ocaml
 let f = function 'A' | 'B' | 'C' -> true | _ -> false
@@ -76,7 +76,6 @@ let p3 = P.take_bigstring 4
 let p4 = P.take 4
 let p5 = P.take_till (function ' ' -> true | _ -> false)
 let p6 = P.(many (char 'A'))
-let p7 = P.(many_while any_char (function ' ' -> false | _ -> true))
 let p8 = P.(take_while (function 'a' -> true | _ -> false) *> commit *> take_while (function 'b' -> true| _ -> false))
 
 ```
@@ -96,7 +95,7 @@ Exception:
 Cohttp_parser.Parse.Parse_failure "[take_while1] count is less than 1".
 
 # parse p3 "DDDD";;
-- : P.bigstring * int = (<abstr>, 4)
+- : Bigstringaf.t * int = (<abstr>, 4)
 
 # parse p3 "DDD";;
 Exception:
@@ -127,25 +126,13 @@ Exception: Cohttp_parser.Parse.Parse_failure "[take] not enough input".
 `many` should stop when `p` in `many p` fails
 ```ocaml
 # parse p6 "AAAA ";;
-- : char list * int = (['A'; 'A'; 'A'; 'A'], 4)
+- : unit list * int = ([(); (); (); ()], 4)
 ```
 
 `many` should not fail when end of file is reached
 ```ocaml
 # parse p6 "AAAA";;
-- : char list * int = (['A'; 'A'; 'A'; 'A'], 4)
-```
-
-`many_till` should not fail when end of file is reached
-```ocaml
-# parse p7 "AAA";;
-- : char list * int = (['A'; 'A'; 'A'], 3)
-```
-
-`many_till` should stop when `p` in `many_till p f` fails
-```ocaml
-# parse p7 "AAAA ";;
-- : char list * int = (['A'; 'A'; 'A'; 'A'], 4)
+- : unit list * int = ([(); (); (); ()], 4)
 ```
 
 ```ocaml
@@ -191,7 +178,7 @@ val pos : int = 3
 - : unit = ()
 
 # parse ~rdr p4 "";;
-- : string * int = ("hello world", 13)
+- : unit * int = ((), 13)
 ```
 
 ## end_of_input

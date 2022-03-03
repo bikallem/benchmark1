@@ -47,12 +47,7 @@ let lift2 f p q inp =
 
 let rec ensure inp len =
   if Reader.(length inp < pos inp + len) then
-    (* Printf.printf "\n[ensure] Reader.len:%d, len:%d%!" (Reader.length inp.rdr) *)
-    (*   len; *)
     let got = Reader.fill inp len in
-    (* Printf.printf "\n[ensure] got:%d%!" got; *)
-    (* Printf.printf "\n[ensure] Reader.len:%d, len:%d%!" (Reader.length inp.rdr) *)
-    (*   len; *)
     if got = 0 then raise_notrace End_of_file else ensure inp len
 
 let pos inp = Reader.pos inp
@@ -74,7 +69,6 @@ let peek_char inp =
 
 let peek_string n inp =
   try
-    (* Printf.printf "\n[peek_string] len:%d%!" n; *)
     ensure inp n;
     Reader.substring inp ~off:inp.pos ~len:n
   with End_of_file -> fail "[peek_string] not enough input" inp
@@ -83,9 +77,7 @@ let sprintf = Printf.sprintf
 
 let char c inp =
   let c' = peek_char inp in
-  if c = c' then (
-    Reader.incr_pos inp;
-    c)
+  if c = c' then Reader.incr_pos inp
   else fail (sprintf "[char] expected %C, got %C" c c') inp
 
 let any_char inp =
@@ -103,9 +95,7 @@ let satisfy f inp =
 
 let string s inp =
   let len = String.length s in
-  (* Printf.printf "\n[string] len: %d%!" len; *)
   ensure inp len;
-  (* Printf.printf "\n[string] Reader.length: %d%!" (Reader.length inp.rdr); *)
   let pos = pos inp in
   let i = ref 0 in
   while
@@ -114,14 +104,7 @@ let string s inp =
   do
     incr i
   done;
-  if len = !i then (
-    Reader.incr_pos ~n:len inp;
-    s)
-  else fail "[string]" inp
-
-let fix f =
-  let rec p = lazy (f r) and r state = (Lazy.force p) state in
-  r
+  if len = !i then Reader.incr_pos ~n:len inp else fail "[string]" inp
 
 let count_while inp f =
   let i = ref 0 in
@@ -178,16 +161,6 @@ let rec many : 'a t -> 'a list t =
     a :: many p inp
   with Parse_failure _ | End_of_file -> []
 
-let rec many_while : 'a t -> (char -> bool) -> 'a list t =
- fun p f inp ->
-  try
-    let c = peek_char inp in
-    if f c then
-      let a = p inp in
-      a :: many_while p f inp
-    else []
-  with Parse_failure _ | End_of_file -> []
-
 let skip f inp =
   ensure inp 1;
   let c = Reader.(unsafe_get inp (pos inp)) in
@@ -199,28 +172,3 @@ let skip_while f inp =
 
 let rec skip_many p inp =
   match p inp with _ -> skip_many p inp | exception Parse_failure _ -> ()
-
-let token =
-  take_while1 (function
-    | '0' .. '9'
-    | 'a' .. 'z'
-    | 'A' .. 'Z'
-    | '!' | '#' | '$' | '%' | '&' | '\'' | '*' | '+' | '-' | '.' | '^' | '_'
-    | '`' | '|' | '~' ->
-        true
-    | _ -> false)
-
-let ows = skip_while (function ' ' | '\t' -> true | _ -> false)
-let crlf = string "\r\n"
-let is_cr = function '\r' -> true | _ -> false
-
-(*-- https://datatracker.ietf.org/doc/html/rfc7230#section-3.2 --*)
-let header =
-  lift2
-    (fun key value -> (key, value))
-    (token <* char ':' <* ows)
-    (take_till is_cr <* crlf)
-
-let rec headers hdrs inp =
-  header inp |> Headers.add hdrs;
-  match peek_char inp with '\r' -> () | _ -> headers hdrs inp

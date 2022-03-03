@@ -32,7 +32,6 @@ let writable_space t = Bigstringaf.length t.buf - t.len
 let trailing_space t = Bigstringaf.length t.buf - (t.off + t.len)
 
 let compress t =
-  (* Eio.traceln "Reader.compress"; *)
   Bigstringaf.unsafe_blit t.buf ~src_off:t.off t.buf ~dst_off:0 ~len:t.len;
   t.off <- 0
 

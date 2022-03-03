@@ -50,18 +50,18 @@ let read_fn flow buf ~off ~len =
 let flow = request_source [ Cstruct.of_string req_text ]
 let angstrom_read_fn cs = try Eio.Flow.read flow cs with End_of_file -> 0
 let reader = Cohttp_parser.Reader.create 0x1000 (read_fn flow)
-let hdrs = Cohttp_parser.Headers.create 15
-let p1 = Cohttp_parser.Parse.(headers hdrs <* crlf)
+let req = Cohttp_parser.Request.create reader
+let p = Cohttp_parser.Request.p_headers req.headers
 
 let cohttp_headers () =
   Cohttp_parser.Reader.clear reader;
-  Cohttp_parser.Headers.clear hdrs;
-  p1 reader
+  Cohttp_parser.Request.clear_headers req;
+  p reader
 
-let p = Angstrom_parser.Parse.(headers <* eol)
+let p1 = Angstrom_parser.Parse.(headers <* eol)
 
 let angstrom_headers () =
-  Angstrom.parse_reader ~consume:Angstrom.Consume.Prefix p angstrom_read_fn
+  Angstrom.parse_reader ~consume:Angstrom.Consume.Prefix p1 angstrom_read_fn
 
 let () =
   Command.run
