@@ -23,8 +23,6 @@ let create ?(initial_header_len = 15) reader =
     read_complete = false;
   }
 
-let clear_headers t = Headers.clear t.headers
-
 (* let is_keep_alive t = *)
 (*   match Http.Header.get t.headers "connection" with *)
 (*   | Some v when v = "keep-alive" -> true *)
@@ -68,14 +66,15 @@ let rec p_headers : Headers.t -> unit P.t =
   p_header inp |> Headers.add hdrs;
   match P.peek_char inp with '\r' -> crlf inp | _ -> p_headers hdrs inp
 
-let init (t : t) rdr =
-  match P.end_of_input rdr with
+let parse_into (t : t) =
+  Headers.clear t.headers;
+  match P.end_of_input t.reader with
   | true -> Stdlib.raise_notrace End_of_file
   | false ->
-      t.meth <- p_meth rdr;
-      t.resource <- p_resource rdr;
-      t.version <- p_version rdr;
-      p_headers t.headers rdr;
+      t.meth <- p_meth t.reader;
+      t.resource <- p_resource t.reader;
+      t.version <- p_version t.reader;
+      p_headers t.headers t.reader;
       t.read_complete <- false
 
 (* let read_fixed t = *)

@@ -54,8 +54,9 @@ let req = Cohttp_parser.Request.create reader
 let p = Cohttp_parser.Request.p_headers req.headers
 
 let cohttp_headers () =
-  Cohttp_parser.Reader.clear reader;
-  Cohttp_parser.Request.clear_headers req;
+  let open Cohttp_parser in
+  Reader.clear reader;
+  Headers.clear req.headers;
   p reader
 
 let p1 = Angstrom_parser.Parse.(headers <* eol)
