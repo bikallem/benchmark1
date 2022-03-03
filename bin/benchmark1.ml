@@ -18,50 +18,50 @@ let req_text =
    Cache-Control: max-age=0\r\n\
    \r\n"
 
+(* An Eio.Flow.source that always returns the same data. *)
+let request_source data : Eio.Flow.source =
+  object (self)
+    inherit Eio.Flow.source
+
+    method private read_source_buffer fn =
+      let rec aux () =
+        match data with
+        | [] -> raise End_of_file
+        | x :: _xs when Cstruct.length x = 0 -> aux ()
+        | xs -> fn xs
+      in
+      aux ()
+
+    method! read_methods =
+      [ Eio.Flow.Read_source_buffer self#read_source_buffer ]
+
+    method read_into dst =
+      let got, _src = Cstruct.fillv ~dst ~src:data in
+      if got = 0 then raise End_of_file;
+      got
+  end
+
 let read_fn flow buf ~off ~len =
   try
     let cs = Cstruct.of_bigarray ~off ~len buf in
     Eio.Flow.read flow cs
   with End_of_file -> 0
 
-let angstrom_read_fn flow cs = try Eio.Flow.read flow cs with End_of_file -> 0
-let flow = ref (Eio.Flow.string_source req_text)
-let reader = Cohttp_parser.Reader.create 0x1000 (read_fn !flow)
-
-type hdr = { headers : (string * string) array; mutable len : int }
-
-let hdrs = { headers = Array.create ~len:15 ("", ""); len = 0 }
+let flow = request_source [ Cstruct.of_string req_text ]
+let angstrom_read_fn cs = try Eio.Flow.read flow cs with End_of_file -> 0
+let reader = Cohttp_parser.Reader.create 0x1000 (read_fn flow)
+let hdrs = Cohttp_parser.Headers.create 15
+let p1 = Cohttp_parser.Parse.(headers hdrs <* crlf)
 
 let cohttp_headers () =
-  flow := Eio.Flow.string_source req_text;
-  Cohttp_parser.Reader.reset reader;
-  Cohttp_parser.Parse.headers reader
+  Cohttp_parser.Reader.clear reader;
+  Cohttp_parser.Headers.clear hdrs;
+  p1 reader
 
-let cohttp_headers2 () =
-  flow := Eio.Flow.string_source req_text;
-  Cohttp_parser.Reader.reset reader;
-  Cohttp_parser.Parse.headers2 reader
-
-let rec headers3 (hdrs : hdr) inp =
-  try
-    let h = Cohttp_parser.Parse.header inp in
-    Array.unsafe_set hdrs.headers hdrs.len h;
-    hdrs.len <- hdrs.len + 1;
-    (* Cohttp_parser.Parse.commit inp; *)
-    headers3 hdrs inp
-  with Cohttp_parser.Parse.Parse_failure _ -> ()
-
-let cohttp_headers3 () =
-  flow := Eio.Flow.string_source req_text;
-  Cohttp_parser.Reader.reset reader;
-  hdrs.len <- 0;
-  headers3 hdrs reader
+let p = Angstrom_parser.Parse.(headers <* eol)
 
 let angstrom_headers () =
-  let flow = Eio.Flow.string_source req_text in
-  let p = Angstrom_parser.Parse.headers in
-  Angstrom.parse_reader ~consume:Angstrom.Consume.Prefix p
-    (angstrom_read_fn flow)
+  Angstrom.parse_reader ~consume:Angstrom.Consume.Prefix p angstrom_read_fn
 
 let () =
   Command.run
@@ -69,6 +69,4 @@ let () =
        [
          Bench.Test.create ~name:"angstrom:headers" angstrom_headers;
          Bench.Test.create ~name:"cohttp:headers" cohttp_headers;
-         Bench.Test.create ~name:"cohttp:headers2" cohttp_headers2;
-         Bench.Test.create ~name:"cohttp:headers3" cohttp_headers3;
        ])

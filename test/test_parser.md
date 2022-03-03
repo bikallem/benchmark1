@@ -19,7 +19,7 @@ let parse ?rdr p s =
   let p = P.(lift2 (fun a pos -> (a, pos)) p pos) in
   let rdr = 
     match rdr with
-    | Some r -> (Reader.reset r; r)
+    | Some r -> (Reader.clear r; r)
     | None -> create_reader s 
   in
   p rdr
@@ -77,6 +77,7 @@ let p4 = P.take 4
 let p5 = P.take_till (function ' ' -> true | _ -> false)
 let p6 = P.(many (char 'A'))
 let p7 = P.(many_while any_char (function ' ' -> false | _ -> true))
+let p8 = P.(take_while (function 'a' -> true | _ -> false) *> commit *> take_while (function 'b' -> true| _ -> false))
 
 ```
 
@@ -145,6 +146,11 @@ Exception: Cohttp_parser.Parse.Parse_failure "[take] not enough input".
 ```ocaml
 # parse p7 "AAAA ";;
 - : char list * int = (['A'; 'A'; 'A'; 'A'], 4)
+```
+
+```ocaml
+# parse p8 "aaaabbb";;
+- : string * int = ("bbb", 3)
 ```
 
 ## Skip: skip, skip_while, skip_many 

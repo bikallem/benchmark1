@@ -31,11 +31,6 @@ let incr_pos ?(n = 1) t = t.pos <- t.pos + n
 let writable_space t = Bigstringaf.length t.buf - t.len
 let trailing_space t = Bigstringaf.length t.buf - (t.off + t.len)
 
-let reset t =
-  t.pos <- 0;
-  t.committed_bytes <- 0;
-  t.eof_seen <- false
-
 let compress t =
   (* Eio.traceln "Reader.compress"; *)
   Bigstringaf.unsafe_blit t.buf ~src_off:t.off t.buf ~dst_off:0 ~len:t.len;
@@ -60,13 +55,18 @@ let adjust_buffer t to_read =
 
 let consume t n =
   assert (t.len >= n);
-  (* assert (t.pos >= n); *)
+  assert (t.pos >= n);
   t.off <- t.off + n;
   t.len <- t.len - n;
   t.pos <- t.pos - n;
   t.committed_bytes <- t.committed_bytes + n
 
 let commit t = consume t t.pos
+
+let clear t =
+  commit t;
+  t.committed_bytes <- 0;
+  t.eof_seen <- false
 
 let fill t to_read =
   if t.eof_seen then 0
@@ -79,8 +79,8 @@ let fill t to_read =
     let len = trailing_space t in
     let got = t.read_fn t.buf ~off ~len in
     (* Eio.traceln "Reader.fill got:%d" got; *)
-    (* Printf.printf "\n[fill] off:%d, len:%d, got:%d, to_read:%d%!" off len got *)
-    (*   to_read; *)
+    (* Printf.printf "\nReader.fill off:%d, len:%d, got:%d, to_read:%d%!" off len *)
+    (*   got to_read; *)
     if got = 0 then (
       t.eof_seen <- true;
       0)

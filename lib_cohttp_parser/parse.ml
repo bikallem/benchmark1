@@ -1,6 +1,3 @@
-type bigstring =
-  (char, Bigarray.int8_unsigned_elt, Bigarray.c_layout) Bigarray.Array1.t
-
 type 'a t = Reader.t -> 'a
 
 exception Parse_failure of string
@@ -70,7 +67,7 @@ let option : 'a -> 'a t -> 'a t = fun x p -> p <|> return x
 
 let peek_char inp =
   let open Reader in
-  if pos inp < length inp then unsafe_get inp inp.pos
+  if pos inp < length inp then unsafe_get inp (pos inp)
   else (
     ensure inp 1;
     unsafe_get inp inp.pos)
@@ -109,7 +106,7 @@ let string s inp =
   (* Printf.printf "\n[string] len: %d%!" len; *)
   ensure inp len;
   (* Printf.printf "\n[string] Reader.length: %d%!" (Reader.length inp.rdr); *)
-  let pos = inp.pos in
+  let pos = pos inp in
   let i = ref 0 in
   while
     !i < len
@@ -118,7 +115,7 @@ let string s inp =
     incr i
   done;
   if len = !i then (
-    inp.pos <- inp.pos + len;
+    Reader.incr_pos ~n:len inp;
     s)
   else fail "[string]" inp
 
@@ -154,14 +151,10 @@ let take_while f inp =
     s)
   else ""
 
-let take_bigstring : int -> bigstring t =
+let take_bigstring : int -> Bigstringaf.t t =
  fun n inp ->
   try
-    (* Printf.printf "\n[take_bigstring] n: %d%!" n; *)
     ensure inp n;
-    (* let buf = Reader.buffer inp.rdr in *)
-    (* Printf.printf "\n[take_bigstring] Reader.length :%d, n:%d, buf_len: %d%!" *)
-    (*   (Reader.length inp.rdr) n (Bigstringaf.length buf); *)
     let s = Reader.(copy inp ~off:(pos inp) ~len:n) in
     Reader.incr_pos ~n inp;
     s
@@ -217,19 +210,9 @@ let token =
         true
     | _ -> false)
 
-let space = char '\x20'
-let htab = char '\t'
 let ows = skip_while (function ' ' | '\t' -> true | _ -> false)
-let optional x = option None (x >>| Option.some)
-let is_vchar = function '\x21' .. '\x7E' -> true | _ -> false
-let vchar = satisfy (function '\x21' .. '\x7E' -> true | _ -> false)
-let digit = satisfy (function '0' .. '9' -> true | _ -> false)
 let crlf = string "\r\n"
-let is_space_or_colon = function ' ' | '\t' | ':' -> true | _ -> false
 let is_cr = function '\r' -> true | _ -> false
-let is_space = function ' ' | '\t' -> true | _ -> false
-let spaces = skip_while is_space
-let eol = string "\r\n" <?> "eol"
 
 (*-- https://datatracker.ietf.org/doc/html/rfc7230#section-3.2 --*)
 let header =
@@ -238,21 +221,6 @@ let header =
     (token <* char ':' <* ows)
     (take_till is_cr <* crlf)
 
-let cons x xs = x :: xs
-let _emp = return []
-
-let headers =
-  let+ x =
-    fix (fun headers ->
-        let _rec = lift2 cons header headers in
-        peek_char >>= function '\r' -> _emp | _ -> _rec)
-  in
-  Http.Header.of_list x
-
-let headers2 =
-  let+ x = many header in
-  Http.Header.of_list x
-
-let headers4 =
-  let+ x = many_while header (function '\r' -> false | _ -> true) in
-  Http.Header.of_list x
+let rec headers hdrs inp =
+  header inp |> Headers.add hdrs;
+  match peek_char inp with '\r' -> () | _ -> headers hdrs inp
