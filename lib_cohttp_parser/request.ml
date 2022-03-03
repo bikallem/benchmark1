@@ -75,6 +75,7 @@ let parse_into (t : t) =
       t.resource <- p_resource t.reader;
       t.version <- p_version t.reader;
       p_headers t.headers t.reader;
+      P.commit t.reader;
       t.read_complete <- false
 
 (* let read_fixed t = *)

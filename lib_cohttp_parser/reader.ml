@@ -70,10 +70,10 @@ let clear t =
 let fill t to_read =
   if t.eof_seen then 0
   else (
+    adjust_buffer t to_read;
     (* Printf.printf *)
     (*   "\nReader.fill to_read:%d, reader.len:%d, reader.off:%d, buf.len:%d" *)
-    (*   to_read t.len t.off (Bigstringaf.length t.buf); *)
-    adjust_buffer t to_read;
+    (* to_read t.len t.off (Bigstringaf.length t.buf); *)
     let off = t.off + t.len in
     let len = trailing_space t in
     let got = t.read_fn t.buf ~off ~len in
