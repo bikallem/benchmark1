@@ -172,6 +172,11 @@ let to_string t =
   Buffer.add_string b "\r\n";
   Buffer.contents b
 
+let is_keep_alive t =
+  match get t "connection" with
+  | Some v -> caseless_equal v "keep-alive"
+  | None -> false
+
 let pp_print_array ?(pp_sep = Format.pp_print_cut) pp_v fmt a =
   let len = Array.length a in
   if len > 0 then (

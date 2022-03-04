@@ -166,3 +166,18 @@ Exception: Not_found.
 - : int = 1
 ```
 
+## is_keep_alive
+
+```ocaml
+# Header.is_keep_alive t;;
+- : bool = false
+```
+
+```ocaml
+Header.add t "Connection" "keep-alive";;
+```
+
+```ocaml
+# Header.is_keep_alive t;;
+- : bool = true
+```

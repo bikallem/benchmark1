@@ -1,6 +1,6 @@
 type t = {
   mutable version : Version.t;
-  mutable headers : Header.t;
+  headers : Header.t;
   mutable meth : Method.t;
   mutable resource : string;
   reader : Reader.t;
@@ -12,6 +12,7 @@ let headers t = t.headers
 let meth t = t.meth
 let resource t = t.resource
 let version t = t.version
+let is_keep_alive t = Header.is_keep_alive t.headers
 
 let create ?(initial_header_len = 15) reader =
   {
@@ -22,11 +23,6 @@ let create ?(initial_header_len = 15) reader =
     resource = "";
     read_complete = false;
   }
-
-(* let is_keep_alive t = *)
-(*   match Http.Header.get t.headers "connection" with *)
-(*   | Some v when v = "keep-alive" -> true *)
-(*   | Some _ | _ -> false *)
 
 module P = Parse
 
