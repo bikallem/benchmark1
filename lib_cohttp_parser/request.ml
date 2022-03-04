@@ -1,6 +1,6 @@
 type t = {
   mutable version : Version.t;
-  mutable headers : Headers.t;
+  mutable headers : Header.t;
   mutable meth : Method.t;
   mutable resource : string;
   reader : Reader.t;
@@ -16,7 +16,7 @@ let version t = t.version
 let create ?(initial_header_len = 15) reader =
   {
     version = Version.HTTP_1_1;
-    headers = Headers.create initial_header_len;
+    headers = Header.create initial_header_len;
     meth = Method.Other "";
     reader;
     resource = "";
@@ -61,13 +61,13 @@ let p_header =
       (token <* char ':' <* ows)
       (take_till is_cr <* crlf))
 
-let rec p_headers : Headers.t -> unit P.t =
+let rec p_headers : Header.t -> unit P.t =
  fun hdrs inp ->
-  p_header inp |> Headers.add hdrs;
+  p_header inp |> Header.add hdrs;
   match P.peek_char inp with '\r' -> crlf inp | _ -> p_headers hdrs inp
 
 let parse_into (t : t) =
-  Headers.clear t.headers;
+  Header.clear t.headers;
   match P.end_of_input t.reader with
   | true -> Stdlib.raise_notrace End_of_file
   | false ->

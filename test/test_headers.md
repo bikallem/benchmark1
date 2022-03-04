@@ -1,51 +1,50 @@
-## Create Headers.t and add items to it
+## Create Header.t and add items to it
 
 ```ocaml
 open Cohttp_parser
 ```
 
 ```ocaml
-# let hdrs = Headers.create 1;;
-val hdrs : Headers.t =
-  {Cohttp_parser.Headers.headers = [|("", "")|]; len = 0}
+# let hdrs = Header.create 1;;
+val hdrs : Header.t = {Cohttp_parser.Header.headers = [|("", "")|]; len = 0}
 
-# Headers.add hdrs ("nm1", "val1");;
+# Header.add hdrs ("nm1", "val1");;
 - : unit = ()
 
-# Headers.add hdrs ("nm2", "val2");;
+# Header.add hdrs ("nm2", "val2");;
 - : unit = ()
 
-# Headers.length hdrs;;
+# Header.length hdrs;;
 - : int = 2
 
-# Headers.add hdrs ("nm3", "val3");;
+# Header.add hdrs ("nm3", "val3");;
 - : unit = ()
 
-# Headers.add hdrs ("nm4", "val4");;
+# Header.add hdrs ("nm4", "val4");;
 - : unit = ()
 
-# Headers.length hdrs;;
+# Header.length hdrs;;
 - : int = 4
 
 # hdrs;;
-- : Headers.t =
-{Cohttp_parser.Headers.headers =
+- : Header.t =
+{Cohttp_parser.Header.headers =
   [|("nm1", "val1"); ("nm2", "val2"); ("nm3", "val3"); ("nm4", "val4")|];
  len = 4}
 ```
 
-## Clear Headers.t
+## Clear Header.t
 
 ```ocaml
-# Headers.clear hdrs;;
+# Header.clear hdrs;;
 - : unit = ()
 
-# Headers.length hdrs;;
+# Header.length hdrs;;
 - : int = 0
 
-# Headers.add hdrs ("nm1", "val1");;
+# Header.add hdrs ("nm1", "val1");;
 - : unit = ()
 
-# Headers.length hdrs;;
+# Header.length hdrs;;
 - : int = 1
 ```
