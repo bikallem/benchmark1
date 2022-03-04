@@ -16,7 +16,7 @@ let resize t =
 let add_header t hdr =
   if t.len >= Array.length t.headers then resize t;
   Array.unsafe_set t.headers t.len hdr;
-  t.len <- t.len + 1
+  t.len <- succ t.len
 
 let add t k v : t =
   add_header t (k, v);
@@ -28,7 +28,6 @@ let add_list t l : t =
 
 let is_empty t = t.len = 0
 let length t = t.len
-let clear t = t.len <- 0
 let compare (t1 : t) (t2 : t) = Stdlib.compare t1 t2
 
 external string_unsafe_get64 : string -> int -> int64 = "%caml_string_get64u"
@@ -108,15 +107,26 @@ let get_multi t k : string list =
   in
   loop 0 []
 
-(* let remove t k = *)
-(*   let n = Array.length t.headers in *)
-(*   let rec loop i = *)
-(*     if i = n then raise_notrace Not_found *)
-(*     else *)
-(*       let (k', v) = Array.unsafe_get t.headers i in *)
+let clear t = t.len <- 0
 
-(*   in *)
-(*   loop 0 *)
+let remove_at t i =
+  if i = 0 then Array.blit t.headers 1 t.headers 0 (t.len - 1)
+  else if i = t.len - 1 then Array.blit t.headers 0 t.headers 0 (t.len - 2)
+  else Array.blit t.headers (i + 1) t.headers i (t.len - i - 1);
+  t.len <- pred t.len
+
+let remove t k =
+  let rec loop seen i =
+    if i >= t.len then if seen then () else raise_notrace Not_found
+    else
+      let k', _ = Array.unsafe_get t.headers i in
+      if caseless_equal k k' then (
+        remove_at t i;
+        loop true i)
+      else loop seen (succ i)
+  in
+  loop false 0;
+  t
 
 let pp_print_array ?(pp_sep = Format.pp_print_cut) pp_v fmt a =
   let len = Array.length a in

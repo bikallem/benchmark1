@@ -109,6 +109,38 @@ Use `add`, `add_header`, `add_multi` and `add_list` to add headers. Duplicates -
 - : string list = []
 ```
 
+## Remove header
+
+`remove` removes all occurences of header matching the key.
+
+```ocaml
+# Header.remove t "nm1";;
+- : Header.t = Header [ length=9
+{nm2 = "val2"; nm3 = "val3"; nm4 = "val4"; nm4 = "val4_2";
+ mult_key = "mult_v1"; mult_key = "mult_v2"; list_nm1 = "list_v1";
+ list_nm2 = "list_v2"; new1 = "new_val1"
+}]
+
+# Header.remove t "new1";;
+- : Header.t = Header [ length=8
+{nm2 = "val2"; nm3 = "val3"; nm4 = "val4"; nm4 = "val4_2";
+ mult_key = "mult_v1"; mult_key = "mult_v2"; list_nm1 = "list_v1";
+ list_nm2 = "list_v2"
+}]
+```
+
+header with key "nm4" has 2 entries. Both of them will be removed by `remove`.
+```ocaml
+# Header.remove t "nm4";;
+- : Header.t = Header [ length=6
+{nm2 = "val2"; nm3 = "val3"; mult_key = "mult_v1"; mult_key = "mult_v2";
+ list_nm1 = "list_v1"; list_nm2 = "list_v2"
+}]
+
+# Header.remove t "non_existent";;
+Exception: Not_found.
+```
+
 ## Clear Header.t
 
 `clears` resets the length to 0.
