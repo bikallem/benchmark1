@@ -1,50 +1,128 @@
-## Create Header.t and add items to it
-
 ```ocaml
 open Cohttp_parser
 ```
+```ocaml
+# #install_printer Header.pp_hum;;
+```
+## Create and Add HTTP headers
+
+`Header.t` is created via `create, empty`.
 
 ```ocaml
-# let hdrs = Header.create 1;;
-val hdrs : Header.t = {Cohttp_parser.Header.headers = [|("", "")|]; len = 0}
+# let t = Header.create 1;;
+val t : Header.t = Header [ length=0 { }]
 
-# Header.add hdrs ("nm1", "val1");;
+# let a = Header.empty;;
+val a : Header.t = Header [ length=0 { }]
+```
+
+Use `add`, `add_header`, `add_multi` and `add_list` to add headers. Duplicates - headers with the same key/name - are allowed.
+
+```ocaml
+# Header.add_header t ("nm1", "val1");;
 - : unit = ()
 
-# Header.add hdrs ("nm2", "val2");;
+# Header.add_header t ("nm2", "val2");;
 - : unit = ()
 
-# Header.length hdrs;;
-- : int = 2
+# Header.add t "nm3" "val3";;
+- : Header.t = Header [ length=3 {nm1 = "val1"; nm2 = "val2"; nm3 = "val3" }]
 
-# Header.add hdrs ("nm3", "val3");;
-- : unit = ()
+# Header.add t "nm4" "val4";;
+- : Header.t = Header [ length=4
+{nm1 = "val1"; nm2 = "val2"; nm3 = "val3"; nm4 = "val4" }]
 
-# Header.add hdrs ("nm4", "val4");;
-- : unit = ()
+# Header.add t "nm4" "val4_2";;
+- : Header.t = Header [ length=5
+{nm1 = "val1"; nm2 = "val2"; nm3 = "val3"; nm4 = "val4"; nm4 = "val4_2" }]
 
-# Header.length hdrs;;
-- : int = 4
+# Header.add_multi t "mult_key" ["mult_v1"; "mult_v2"];;
+- : Header.t = Header [ length=7
+{nm1 = "val1"; nm2 = "val2"; nm3 = "val3"; nm4 = "val4"; nm4 = "val4_2";
+ mult_key = "mult_v1"; mult_key = "mult_v2"
+}]
 
-# hdrs;;
-- : Header.t =
-{Cohttp_parser.Header.headers =
-  [|("nm1", "val1"); ("nm2", "val2"); ("nm3", "val3"); ("nm4", "val4")|];
- len = 4}
+# Header.add_list t [("list_nm1", "list_v1"); ("list_nm2", "list_v2")];;
+- : Header.t = Header [ length=9
+{nm1 = "val1"; nm2 = "val2"; nm3 = "val3"; nm4 = "val4"; nm4 = "val4_2";
+ mult_key = "mult_v1"; mult_key = "mult_v2"; list_nm1 = "list_v1";
+ list_nm2 = "list_v2"
+}]
+```
+
+`add_unless_exists` adds header iff the key doesn't already exist. Below "nm1" already exists so it isn't added again.
+
+```ocaml
+# Header.add_unless_exists t "nm1" "val";;
+- : Header.t = Header [ length=9
+{nm1 = "val1"; nm2 = "val2"; nm3 = "val3"; nm4 = "val4"; nm4 = "val4_2";
+ mult_key = "mult_v1"; mult_key = "mult_v2"; list_nm1 = "list_v1";
+ list_nm2 = "list_v2"
+}]
+```
+
+"new1" doesn't exist yet so it is added to `t`.
+
+```ocaml
+# Header.add_unless_exists t "new1" "new_val1";;
+- : Header.t = Header [ length=10
+{nm1 = "val1"; nm2 = "val2"; nm3 = "val3"; nm4 = "val4"; nm4 = "val4_2";
+ mult_key = "mult_v1"; mult_key = "mult_v2"; list_nm1 = "list_v1";
+ list_nm2 = "list_v2"; new1 = "new_val1"
+}]
+```
+
+## Query Header.t  
+ 
+```ocaml
+# Header.is_empty t;;
+- : bool = false
+
+# Header.(is_empty empty);;
+- : bool = true
+
+# Header.length t;;
+- : int = 10
+
+# Header.compare t t;;
+- : int = 0
+
+# Header.(compare t empty);;
+- : int = 1
+
+# Header.mem t "nm1";;
+- : bool = true
+
+# Header.mem t "non_existing_header";;
+- : bool = false
+
+# Header.get t "nm1";;
+- : string option = Some "val1"
+
+# Header.get t "non_existing_key";;
+- : string option = None
+
+# Header.get_multi t "mult_key";;
+- : string list = ["mult_v2"; "mult_v1"]
+
+# Header.get_multi t "non_existing_key";;
+- : string list = []
 ```
 
 ## Clear Header.t
 
+`clears` resets the length to 0.
+
 ```ocaml
-# Header.clear hdrs;;
+# Header.clear t;;
 - : unit = ()
 
-# Header.length hdrs;;
+# Header.length t;;
 - : int = 0
 
-# Header.add hdrs ("nm1", "val1");;
+# Header.add_header t ("nm1", "val1");;
 - : unit = ()
 
-# Header.length hdrs;;
+# Header.length t;;
 - : int = 1
 ```

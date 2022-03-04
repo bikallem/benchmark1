@@ -63,7 +63,7 @@ let p_header =
 
 let rec p_headers : Header.t -> unit P.t =
  fun hdrs inp ->
-  p_header inp |> Header.add hdrs;
+  p_header inp |> Header.add_header hdrs;
   match P.peek_char inp with '\r' -> crlf inp | _ -> p_headers hdrs inp
 
 let parse_into (t : t) =
