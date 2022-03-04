@@ -5,6 +5,8 @@ type t = {
   mutable buf : Bigstringaf.t;
   mutable off : int;
   mutable len : int;
+  mutable pos : int; (* Parser position *)
+  mutable committed_bytes : int; (* Total bytes read so far *)
   mutable eof_seen : bool;
 }
 
@@ -12,17 +14,24 @@ let create len read_fn =
   (* Eio.traceln "Reader.create"; *)
   assert (len > 0);
   let buf = Bigstringaf.create len in
-  (* let off = 0 in *)
-  (* let got = read_fn (Cstruct.of_bigarray buf ~off ~len) in *)
-  (* Eio.traceln "Reader.create got:%d" got; *)
-  { buf; off = 0; len = 0; read_fn; eof_seen = false }
+  {
+    read_fn;
+    buf;
+    off = 0;
+    len = 0;
+    pos = 0;
+    committed_bytes = 0;
+    eof_seen = false;
+  }
 
 let length t = t.len
+let committed_bytes t = t.committed_bytes
+let pos t = t.pos
+let incr_pos ?(n = 1) t = t.pos <- t.pos + n
 let writable_space t = Bigstringaf.length t.buf - t.len
 let trailing_space t = Bigstringaf.length t.buf - (t.off + t.len)
 
 let compress t =
-  (* Eio.traceln "Reader.compress"; *)
   Bigstringaf.unsafe_blit t.buf ~src_off:t.off t.buf ~dst_off:0 ~len:t.len;
   t.off <- 0
 
@@ -45,22 +54,32 @@ let adjust_buffer t to_read =
 
 let consume t n =
   assert (t.len >= n);
+  assert (t.pos >= n);
   t.off <- t.off + n;
-  t.len <- t.len - n
+  t.len <- t.len - n;
+  t.pos <- t.pos - n;
+  t.committed_bytes <- t.committed_bytes + n
+
+let commit t = consume t t.pos
+
+let clear t =
+  commit t;
+  t.committed_bytes <- 0;
+  t.eof_seen <- false
 
 let fill t to_read =
   if t.eof_seen then 0
   else (
+    adjust_buffer t to_read;
     (* Printf.printf *)
     (*   "\nReader.fill to_read:%d, reader.len:%d, reader.off:%d, buf.len:%d" *)
-    (*   to_read t.len t.off (Bigstringaf.length t.buf); *)
-    adjust_buffer t to_read;
+    (* to_read t.len t.off (Bigstringaf.length t.buf); *)
     let off = t.off + t.len in
     let len = trailing_space t in
     let got = t.read_fn t.buf ~off ~len in
     (* Eio.traceln "Reader.fill got:%d" got; *)
-    (* Printf.printf "\n[fill] off:%d, len:%d, got:%d, to_read:%d%!" off len got *)
-    (*   to_read; *)
+    (* Printf.printf "\nReader.fill off:%d, len:%d, got:%d, to_read:%d%!" off len *)
+    (*   got to_read; *)
     if got = 0 then (
       t.eof_seen <- true;
       0)
