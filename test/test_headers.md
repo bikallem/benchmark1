@@ -109,6 +109,13 @@ Use `add`, `add_header`, `add_multi` and `add_list` to add headers. Duplicates -
 - : string list = []
 ```
 
+## to_string
+
+```ocaml
+# Header.to_string t;;
+- : string =
+"nm1: val1\r\nnm2: val2\r\nnm3: val3\r\nnm4: val4\r\nnm4: val4_2\r\nmult_key: mult_v1\r\nmult_key: mult_v2\r\nlist_nm1: list_v1\r\nlist_nm2: list_v2\r\nnew1: new_val1\r\n\r\n"
+```
 ## Remove header
 
 `remove` removes all occurences of header matching the key.
@@ -158,3 +165,4 @@ Exception: Not_found.
 # Header.length t;;
 - : int = 1
 ```
+

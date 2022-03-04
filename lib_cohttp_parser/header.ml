@@ -160,6 +160,18 @@ let fold (f : string -> string -> 'a -> 'a) t (init : 'a) : 'a =
   in
   loop 0 init
 
+let to_string t =
+  let b = Buffer.create 128 in
+  iter
+    (fun k v ->
+      Buffer.add_string b k;
+      Buffer.add_string b ": ";
+      Buffer.add_string b v;
+      Buffer.add_string b "\r\n")
+    t;
+  Buffer.add_string b "\r\n";
+  Buffer.contents b
+
 let pp_print_array ?(pp_sep = Format.pp_print_cut) pp_v fmt a =
   let len = Array.length a in
   if len > 0 then (
