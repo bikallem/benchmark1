@@ -128,6 +128,38 @@ let remove t k =
   loop false 0;
   t
 
+let iter (f : string -> string -> unit) t : unit =
+  let rec loop i =
+    if i = t.len then ()
+    else
+      let k, v = Array.unsafe_get t.headers i in
+      f k v;
+      loop (succ i)
+  in
+  loop 0
+
+let map (f : string -> string -> string) t : t =
+  let rec loop i =
+    if i = t.len then ()
+    else
+      let k, v = Array.unsafe_get t.headers i in
+      let v' = f k v in
+      Array.unsafe_set t.headers i (k, v');
+      loop (succ i)
+  in
+  loop 0;
+  t
+
+let fold (f : string -> string -> 'a -> 'a) t (init : 'a) : 'a =
+  let rec loop i acc =
+    if i = t.len then acc
+    else
+      let k, v = Array.unsafe_get t.headers i in
+      let acc' = f k v acc in
+      loop (succ i) acc'
+  in
+  loop 0 init
+
 let pp_print_array ?(pp_sep = Format.pp_print_cut) pp_v fmt a =
   let len = Array.length a in
   if len > 0 then (
