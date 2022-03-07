@@ -96,16 +96,22 @@ Use `add`, `add_header`, `add_multi` and `add_list` to add headers. Duplicates -
 # Header.mem t "non_existing_header";;
 - : bool = false
 
-# Header.get t "nm1";;
+# Header.find t "nm1";;
+- : string = "val1"
+
+# Header.find t "non_existing_key";;
+Exception: Not_found.
+
+# Header.find_opt t "nm1";;
 - : string option = Some "val1"
 
-# Header.get t "non_existing_key";;
+# Header.find_opt t "non_existing_key";;
 - : string option = None
 
-# Header.get_multi t "mult_key";;
+# Header.find_multi t "mult_key";;
 - : string list = ["mult_v2"; "mult_v1"]
 
-# Header.get_multi t "non_existing_key";;
+# Header.find_multi t "non_existing_key";;
 - : string list = []
 ```
 

@@ -88,16 +88,28 @@ let mem t k =
 
 let add_unless_exists t k v = if mem t k then t else add t k v
 
-let get t k =
+let findi t k =
   let rec loop i =
-    if i = t.len then None
+    if i = t.len then raise_notrace Not_found
     else
-      let k', v = Array.unsafe_get t.headers i in
-      if caseless_equal k k' then Some v else loop (succ i)
+      let k', _ = Array.unsafe_get t.headers i in
+      if caseless_equal k k' then i else loop (succ i)
   in
   loop 0
 
-let get_multi t k : string list =
+let find t k =
+  let rec loop i =
+    if i = t.len then raise_notrace Not_found
+    else
+      let k', v = Array.unsafe_get t.headers i in
+      if caseless_equal k k' then v else loop (succ i)
+  in
+  loop 0
+
+let find_opt t k =
+  match find t k with v -> Some v | exception Not_found -> None
+
+let find_multi t k : string list =
   let rec loop i acc =
     if i = t.len then acc
     else
@@ -173,9 +185,9 @@ let to_string t =
   Buffer.contents b
 
 let is_keep_alive t =
-  match get t "connection" with
-  | Some v -> caseless_equal v "keep-alive"
-  | None -> false
+  match find t "connection" with
+  | v -> caseless_equal v "keep-alive"
+  | exception Not_found -> false
 
 let pp_print_array ?(pp_sep = Format.pp_print_cut) pp_v fmt a =
   let len = Array.length a in
