@@ -154,6 +154,23 @@ header with key "nm4" has 2 entries. Both of them will be removed by `remove`.
 Exception: Not_found.
 ```
 
+## replace
+
+```ocaml
+# Header.replace t "nm2" "replaced_value";;
+- : Header.t = Header [ length=6
+{nm2 = "replaced_value"; nm3 = "val3"; mult_key = "mult_v1";
+ mult_key = "mult_v2"; list_nm1 = "list_v1"; list_nm2 = "list_v2"
+}]
+
+# Header.replace t "new2" "new2_value";;
+- : Header.t = Header [ length=7
+{nm2 = "replaced_value"; nm3 = "val3"; mult_key = "mult_v1";
+ mult_key = "mult_v2"; list_nm1 = "list_v1"; list_nm2 = "list_v2";
+ new2 = "new2_value"
+}]
+```
+
 ## Clear Header.t
 
 `clears` resets the length to 0.

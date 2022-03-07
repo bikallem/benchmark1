@@ -13,6 +13,8 @@ let resize t =
   Array.blit t.headers 0 new_headers 0 t.len;
   t.headers <- new_headers
 
+(* Add *)
+
 let add_header t hdr =
   if t.len >= Array.length t.headers then resize t;
   Array.unsafe_set t.headers t.len hdr;
@@ -88,6 +90,7 @@ let mem t k =
 
 let add_unless_exists t k v = if mem t k then t else add t k v
 
+(* find *)
 let findi t k =
   let rec loop i =
     if i = t.len then raise_notrace Not_found
@@ -119,7 +122,7 @@ let find_multi t k : string list =
   in
   loop 0 []
 
-let clear t = t.len <- 0
+(* remove *)
 
 let remove_at t i =
   if i = 0 then Array.blit t.headers 1 t.headers 0 (t.len - 1)
@@ -139,6 +142,18 @@ let remove t k =
   in
   loop false 0;
   t
+
+(* update *)
+
+let replace t k v =
+  match findi t k with
+  | i ->
+      Array.unsafe_set t.headers i (k, v);
+      t
+  | exception Not_found -> add t k v
+
+let update t k f : t =
+  match f (find_opt t k) with None -> remove t k | Some v -> replace t k v
 
 let iter (f : string -> string -> unit) t : unit =
   let rec loop i =
@@ -188,6 +203,8 @@ let is_keep_alive t =
   match find t "connection" with
   | v -> caseless_equal v "keep-alive"
   | exception Not_found -> false
+
+let clear t = t.len <- 0
 
 let pp_print_array ?(pp_sep = Format.pp_print_cut) pp_v fmt a =
   let len = Array.length a in
