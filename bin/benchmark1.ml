@@ -48,15 +48,9 @@ let source txt : Eio.Flow.source =
       got
   end
 
-let read_fn flow buf ~off ~len =
-  try
-    let cs = Cstruct.of_bigarray ~off ~len buf in
-    Eio.Flow.read flow cs
-  with End_of_file -> 0
-
 let source = source req_txt
 let angstrom_read_fn cs = try Eio.Flow.read source cs with End_of_file -> 0
-let reader = Cohttp_parser.Reader.create 1024 (read_fn source)
+let reader = Cohttp_parser.Reader.create 1024 source
 let req = Cohttp_parser.Request.create reader
 
 let cohttp_request () =

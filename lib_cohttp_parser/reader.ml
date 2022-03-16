@@ -1,7 +1,6 @@
 (* Based on https://github.com/inhabitedtype/angstrom/blob/master/lib/buffering.ml *)
 type t = {
-  read_fn : Bigstringaf.t -> off:int -> len:int -> int;
-  (* Return 0 to indicate End_of_file. *)
+  source : Eio.Flow.source;
   mutable buf : Bigstringaf.t;
   mutable off : int;
   mutable len : int;
@@ -10,12 +9,11 @@ type t = {
   mutable eof_seen : bool;
 }
 
-let create len read_fn =
-  (* Eio.traceln "Reader.create"; *)
+let create len source =
   assert (len > 0);
   let buf = Bigstringaf.create len in
   {
-    read_fn;
+    source;
     buf;
     off = 0;
     len = 0;
@@ -36,7 +34,6 @@ let compress t =
   t.off <- 0
 
 let grow t to_copy =
-  (* Eio.traceln "Reader.grow %d" to_copy; *)
   let old_len = Bigstringaf.length t.buf in
   let new_len = ref old_len in
   let space = writable_space t in
@@ -68,24 +65,13 @@ let clear t =
   t.eof_seen <- false
 
 let fill t to_read =
-  if t.eof_seen then 0
-  else (
-    adjust_buffer t to_read;
-    (* Printf.printf *)
-    (*   "\nReader.fill to_read:%d, reader.len:%d, reader.off:%d, buf.len:%d" *)
-    (* to_read t.len t.off (Bigstringaf.length t.buf); *)
-    let off = t.off + t.len in
-    let len = trailing_space t in
-    let got = t.read_fn t.buf ~off ~len in
-    (* Eio.traceln "Reader.fill got:%d" got; *)
-    (* Printf.printf "\nReader.fill off:%d, len:%d, got:%d, to_read:%d%!" off len *)
-    (*   got to_read; *)
-    if got = 0 then (
-      t.eof_seen <- true;
-      0)
-    else (
-      t.len <- t.len + got;
-      got))
+  adjust_buffer t to_read;
+  let off = t.off + t.len in
+  let len = trailing_space t in
+  let cs = Cstruct.of_bigarray ~off ~len t.buf in
+  let got = Eio.Flow.read t.source cs in
+  t.len <- t.len + got;
+  got
 
 let unsafe_get t off = Bigstringaf.unsafe_get t.buf (t.off + off)
 
@@ -96,9 +82,3 @@ let substring t ~off ~len =
   Bytes.unsafe_to_string b
 
 let copy t ~off ~len = Bigstringaf.copy t.buf ~off:(t.off + off) ~len
-
-let memcmp_string t s =
-  let len = String.length s in 
-  Bigstringaf.memcmp_string t.buf (t.off + t.pos) s 0 len = 0
-
-
