@@ -1,0 +1,7 @@
+[submodule "ocaml-cohttp"]
+	path = vendor/ocaml-cohttp
+	url = git@github.com:mirage/ocaml-cohttp.git
+[submodule "angstrom-effects"]
+	path = vendor/angstrom
+	url = git@github.com:bikallem/angstrom.git
+	branch = effects

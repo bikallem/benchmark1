@@ -96,3 +96,9 @@ let substring t ~off ~len =
   Bytes.unsafe_to_string b
 
 let copy t ~off ~len = Bigstringaf.copy t.buf ~off:(t.off + off) ~len
+
+let memcmp_string t s =
+  let len = String.length s in 
+  Bigstringaf.memcmp_string t.buf (t.off + t.pos) s 0 len = 0
+
+
